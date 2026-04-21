@@ -1,0 +1,6 @@
+.env
+frontend/.next/
+frontend/node_modules/
+backend/tmp/
+backend/log/
+backend/.bundle/
