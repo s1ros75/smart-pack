@@ -1,8 +1,10 @@
-export type PackingItem = {
+export type City = {
+  code: string;
   name: string;
-  category: string;
-  qty: number;
+  region: string;
 };
+
+// --- Weather ---
 
 export type ChanceOfRain = {
   T00_06: number | null;
@@ -20,18 +22,37 @@ export type WeatherSummary = {
   chance_of_rain: ChanceOfRain;
 };
 
-export type PackingListResponse = {
-  city_code: string;
-  nights: number;
-  items: PackingItem[];
-  weather: WeatherSummary[];
+export type WeatherToday = {
+  city_name:        string;
+  date:             string;
+  weather:          string;
+  temp_max:         number | null;
+  temp_min:         number | null;
+  rain_probability: number | null;
 };
 
-export type City = {
-  code: string;
-  name: string;
-  region: string;
+// --- Packing list (new structured format) ---
+
+export type PackingEntry = {
+  name:     string;
+  quantity?: number;
+  note?:    string;
 };
+
+export type PackingList = {
+  clothing:  PackingEntry[];
+  outerwear: PackingEntry[];
+  rain_gear: PackingEntry[];
+  medicine:  PackingEntry[];
+  gadgets:   PackingEntry[];
+};
+
+export type PackingListResult = {
+  weather:      WeatherToday;
+  packing_list: PackingList;
+};
+
+// --- Cities ---
 
 export const CITIES: City[] = [
   { code: "016010", name: "札幌",   region: "北海道" },

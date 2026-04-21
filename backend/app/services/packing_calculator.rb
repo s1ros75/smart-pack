@@ -1,61 +1,91 @@
 class PackingCalculator
-  ESSENTIALS = [
-    { name: "充電器",         category: "電子機器", qty: 1 },
-    { name: "モバイルバッテリー", category: "電子機器", qty: 1 },
-    { name: "常備薬",         category: "衛生用品", qty: 1 },
-    { name: "歯ブラシ・歯磨き粉", category: "衛生用品", qty: 1 },
-    { name: "財布・カード類",  category: "貴重品",   qty: 1 },
-  ].freeze
-
-  COLD_THRESHOLD = 10.0
-  HOT_THRESHOLD  = 25.0
-
-  def initialize(nights:, laundry:, weather:)
-    @nights  = nights
-    @laundry = laundry
-    @weather = weather
+  def initialize(nights:, laundry:, weather_forecasts:)
+    @nights    = nights
+    @laundry   = laundry
+    @forecasts = weather_forecasts
   end
 
   def calculate
-    [
-      *underwear_items,
-      *clothing_items,
-      *weather_items,
-      *ESSENTIALS
-    ]
+    {
+      clothing:  clothing_items,
+      outerwear: outerwear_items,
+      rain_gear: rain_gear_items,
+      medicine:  medicine_items,
+      gadgets:   gadget_items
+    }
   end
 
   private
 
-  # 宿泊数ベースで下着枚数を算出。洗濯ありなら半分（切り上げ）＋1枚バッファ
-  def underwear_items
-    qty = @laundry ? (@nights.fdiv(2).ceil + 1) : (@nights + 1)
-    [
-      { name: "下着",   category: "衣類", qty: qty },
-      { name: "靴下",   category: "衣類", qty: qty },
-    ]
+  # 洗濯なし: 宿泊数+1、洗濯あり: ceil(宿泊数/2)+1
+  def base_qty
+    @laundry ? (@nights.fdiv(2).ceil + 1) : (@nights + 1)
+  end
+
+  def qty_note
+    @laundry ? "宿泊数/2（切り上げ）+1枚" : "宿泊数+1枚"
   end
 
   def clothing_items
-    shirt_qty = @laundry ? (@nights.fdiv(2).ceil + 1) : (@nights + 1)
-    [{ name: "シャツ・トップス", category: "衣類", qty: shirt_qty }]
+    qty = base_qty
+    [
+      { name: "下着",    quantity: qty, note: qty_note },
+      { name: "靴下",    quantity: qty, note: qty_note },
+      { name: "Tシャツ", quantity: qty, note: qty_note }
+    ]
   end
 
-  def weather_items
-    return [] if @weather.empty?
+  # 最高気温の最大値で服装を判定
+  def outerwear_items
+    max_temp = @forecasts.map { |f| f[:temp_max] }.compact.max
+    return [] if max_temp.nil?
 
-    items     = []
-    min_temps = @weather.map { |d| d[:temp_min] }.compact
-    max_temps = @weather.map { |d| d[:temp_max] }.compact
-    has_rain  = @weather.any? do |d|
-      d[:telop]&.include?("雨") ||
-        d[:chance_of_rain]&.values&.compact&.any? { |v| v >= 50 }
+    if max_temp >= 25
+      [{ name: "半袖シャツ", note: "気温25℃以上向け" }]
+    elsif max_temp >= 15
+      [
+        { name: "長袖シャツ",    note: "気温15〜24℃向け" },
+        { name: "薄手ジャケット", note: "気温15〜24℃向け" }
+      ]
+    elsif max_temp >= 5
+      [
+        { name: "厚手のセーター", note: "気温5〜14℃向け" },
+        { name: "コート",        note: "気温5〜14℃向け" }
+      ]
+    else
+      [
+        { name: "ダウンジャケット", note: "気温5℃未満向け" },
+        { name: "マフラー",        note: "気温5℃未満向け" },
+        { name: "手袋",           note: "気温5℃未満向け" }
+      ]
     end
+  end
 
-    items << { name: "厚手のジャケット・コート", category: "衣類",  qty: 1 } if min_temps.any? && min_temps.min < COLD_THRESHOLD
-    items << { name: "サングラス・日焼け止め",   category: "その他", qty: 1 } if max_temps.any? && max_temps.max >= HOT_THRESHOLD
-    items << { name: "折り畳み傘",             category: "その他", qty: 1 } if has_rain
+  # 全予報期間中の最大降水確率で判定
+  def rain_gear_items
+    max_rain = @forecasts
+      .flat_map { |f| f[:chance_of_rain]&.values || [] }
+      .compact
+      .max
 
+    return [] if max_rain.nil? || max_rain < 30
+
+    items = [{ name: "折りたたみ傘", note: "降水確率30%以上" }]
+    if max_rain >= 50
+      items << { name: "レインコート",   note: "降水確率50%以上" }
+      items << { name: "防水シューズ",   note: "降水確率50%以上" }
+    end
     items
+  end
+
+  def medicine_items
+    [{ name: "常備薬", quantity: @nights + 1, note: "宿泊数+1日分" }]
+  end
+
+  def gadget_items
+    [
+      { name: "スマホ充電器" },
+      { name: "モバイルバッテリー" }
+    ]
   end
 end
