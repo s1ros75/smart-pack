@@ -1,23 +1,46 @@
 class PackingCalculator
-  def initialize(nights:, laundry:, weather_forecasts:)
-    @nights    = nights
-    @laundry   = laundry
-    @forecasts = weather_forecasts
+  TRAVEL_TYPE_ITEMS = {
+    "business" => [
+      { name: "スーツ",    note: "ビジネス向け" },
+      { name: "革靴",     note: "ビジネス向け" },
+      { name: "ネクタイ",  note: "ビジネス向け" },
+      { name: "ノートPC",  note: "ビジネス向け" },
+      { name: "名刺入れ",  note: "ビジネス向け" }
+    ],
+    "leisure" => [
+      { name: "カメラ",      note: "観光向け" },
+      { name: "ガイドブック", note: "観光向け" },
+      { name: "サングラス",   note: "観光向け" }
+    ],
+    "outdoor" => [
+      { name: "登山靴",    note: "アウトドア向け" },
+      { name: "レインウェア", note: "アウトドア向け" },
+      { name: "水筒",      note: "アウトドア向け" },
+      { name: "懐中電灯",  note: "アウトドア向け" },
+      { name: "虫除けスプレー", note: "アウトドア向け" }
+    ]
+  }.freeze
+
+  def initialize(nights:, laundry:, weather_forecasts:, travel_type: nil)
+    @nights       = nights
+    @laundry      = laundry
+    @forecasts    = weather_forecasts
+    @travel_type  = travel_type
   end
 
   def calculate
     {
-      clothing:  clothing_items,
-      outerwear: outerwear_items,
-      rain_gear: rain_gear_items,
-      medicine:  medicine_items,
-      gadgets:   gadget_items
+      clothing:    clothing_items,
+      outerwear:   outerwear_items,
+      rain_gear:   rain_gear_items,
+      medicine:    medicine_items,
+      gadgets:     gadget_items,
+      travel_type: travel_type_items
     }
   end
 
   private
 
-  # 洗濯なし: 宿泊数+1、洗濯あり: ceil(宿泊数/2)+1
   def base_qty
     @laundry ? (@nights.fdiv(2).ceil + 1) : (@nights + 1)
   end
@@ -35,7 +58,6 @@ class PackingCalculator
     ]
   end
 
-  # 最高気温の最大値で服装を判定
   def outerwear_items
     max_temp = @forecasts.map { |f| f[:temp_max] }.compact.max
     return [] if max_temp.nil?
@@ -56,12 +78,11 @@ class PackingCalculator
       [
         { name: "ダウンジャケット", note: "気温5℃未満向け" },
         { name: "マフラー",        note: "気温5℃未満向け" },
-        { name: "手袋",           note: "気温5℃未満向け" }
+        { name: "手袋",            note: "気温5℃未満向け" }
       ]
     end
   end
 
-  # 全予報期間中の最大降水確率で判定
   def rain_gear_items
     max_rain = @forecasts
       .flat_map { |f| f[:chance_of_rain]&.values || [] }
@@ -72,8 +93,8 @@ class PackingCalculator
 
     items = [{ name: "折りたたみ傘", note: "降水確率30%以上" }]
     if max_rain >= 50
-      items << { name: "レインコート",   note: "降水確率50%以上" }
-      items << { name: "防水シューズ",   note: "降水確率50%以上" }
+      items << { name: "レインコート", note: "降水確率50%以上" }
+      items << { name: "防水シューズ", note: "降水確率50%以上" }
     end
     items
   end
@@ -87,5 +108,9 @@ class PackingCalculator
       { name: "スマホ充電器" },
       { name: "モバイルバッテリー" }
     ]
+  end
+
+  def travel_type_items
+    TRAVEL_TYPE_ITEMS[@travel_type] || []
   end
 end

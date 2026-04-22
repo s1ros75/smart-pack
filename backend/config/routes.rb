@@ -4,8 +4,16 @@ Rails.application.routes.draw do
     get  "weather",      to: "weather#index"
     post "packing_list", to: "packing_lists#create"
 
+    resources :travels do
+      member do
+        post :duplicate
+      end
+      resources :packing_items, only: [:create]
+    end
+    resources :packing_items, only: [:update, :destroy]
+
     namespace :v1 do
-      get "health", to: "health#index"
+      get "health",       to: "health#index"
       get "packing_list", to: "packing_lists#index"
     end
   end
