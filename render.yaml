@@ -5,7 +5,6 @@ services:
     dockerfilePath: ./backend/Dockerfile.production
     dockerContext: ./backend
     plan: free
-    preDeployCommand: "bundle exec rails db:migrate"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
