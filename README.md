@@ -16,7 +16,7 @@
 <!-- スクリーンショットを追加予定 -->
 > デプロイ後に追加予定
 
-**デモURL:** _準備中_
+**デモURL:** _準備中（Renderにデプロイ後更新）_
 
 ---
 
@@ -256,6 +256,32 @@ smart-pack/
 
 ### ✅ 疎通確認エンドポイント
 `GET /api/health` でサーバーとDBの接続状態を確認可能。デプロイ後の動作確認やCI/CDでの死活監視に活用できる。
+
+---
+
+## 🚢 Renderへのデプロイ
+
+### 必要な環境変数
+
+| 変数名 | 説明 | 設定場所 |
+|-------|------|---------|
+| `DATABASE_URL` | PostgreSQL接続URL | Render が自動設定 |
+| `RAILS_MASTER_KEY` | Railsクレデンシャル復号キー | Renderダッシュボードで手動設定 |
+| `FRONTEND_URL` | フロントエンドのURL（CORS許可用） | Renderダッシュボードで手動設定 |
+| `NEXT_PUBLIC_API_URL` | バックエンドAPIのURL | Renderダッシュボードで手動設定 |
+
+### デプロイ手順
+
+1. [Render](https://render.com) にサインアップ
+2. GitHubリポジトリを連携
+3. **"New → Blueprint"** を選択し、このリポジトリを指定（`render.yaml` が自動検出されます）
+4. Renderダッシュボードで以下を手動設定：
+   - `RAILS_MASTER_KEY` — ローカルの `backend/config/master.key` の中身（なければ `rails credentials:edit` で生成）
+   - `FRONTEND_URL` — フロントエンドのデプロイURL（例: `https://smart-pack.onrender.com`）
+   - `NEXT_PUBLIC_API_URL` — バックエンドのURL（例: `https://smart-pack-backend.onrender.com`）
+5. **Deploy** を実行
+
+> **Note:** Renderの無料プランではPostgreSQLは90日で削除されます。本番利用には有料プランを推奨します。
 
 ---
 

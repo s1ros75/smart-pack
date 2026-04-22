@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: smart-pack-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile.production
+    dockerContext: ./backend
+    plan: free
+    preDeployCommand: "bundle exec rails db:migrate"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smart-pack-db
+          property: connectionString
+      - key: RAILS_MASTER_KEY
+        sync: false   # Renderのダッシュボードで手動設定
+      - key: FRONTEND_URL
+        sync: false   # Renderのダッシュボードで手動設定（例: https://smart-pack.onrender.com）
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_LOG_TO_STDOUT
+        value: "true"
+
+databases:
+  - name: smart-pack-db
+    databaseName: smart_pack_production
+    plan: free

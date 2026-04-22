@@ -1,6 +1,10 @@
 .env
+.env.local
+frontend/.env.local
 frontend/.next/
 frontend/node_modules/
 backend/tmp/
 backend/log/
 backend/.bundle/
+backend/config/master.key
+backend/config/credentials/*.key
