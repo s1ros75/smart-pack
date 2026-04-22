@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { fetchWeather, createTravel } from "@/lib/api";
+import { fetchWeather, fetchWeatherPeriod, createTravel } from "@/lib/api";
 import { CITIES } from "@/types/packing";
 import { TRAVEL_TYPE_META } from "@/types/travel";
 import type { TravelType } from "@/types/travel";
-import type { WeatherToday } from "@/types/packing";
+import type { WeatherToday, PeriodForecast } from "@/types/packing";
 import WeatherCard from "@/components/WeatherCard";
 
 type WeatherState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "ok"; data: WeatherToday }
+  | { status: "ok"; data: WeatherToday | PeriodForecast }
   | { status: "error"; message: string };
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -39,10 +39,14 @@ export default function NewTravelPage() {
 
   useEffect(() => {
     setWeather({ status: "loading" });
-    fetchWeather(cityCode)
+    const fetch =
+      startDate && endDate && !dateError
+        ? fetchWeatherPeriod(cityCode, startDate, endDate)
+        : fetchWeather(cityCode);
+    fetch
       .then(data => setWeather({ status: "ok", data }))
       .catch(err  => setWeather({ status: "error", message: err instanceof Error ? err.message : "エラー" }));
-  }, [cityCode]);
+  }, [cityCode, startDate, endDate, dateError]);
 
   useEffect(() => {
     if (!startDate || !endDate) {

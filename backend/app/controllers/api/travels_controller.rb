@@ -13,13 +13,25 @@ module Api
 
     def create
       city_code   = params.require(:city_code)
-      nights      = params.require(:nights).to_i
       laundry     = ActiveModel::Type::Boolean.new.cast(params[:laundry])
       travel_type = params[:travel_type].presence || "leisure"
+      start_date  = params[:start_date].presence
+      end_date    = params[:end_date].presence
 
       service       = WeatherService.new(city_code)
       weather_today = service.fetch_today
-      forecasts     = service.fetch
+
+      forecasts        = []
+      forecast_summary = nil
+      nights           = params[:nights].present? ? params[:nights].to_i : 1
+
+      if start_date && end_date
+        period_data      = service.get_forecast_for_period(Date.parse(start_date), Date.parse(end_date))
+        forecast_summary = period_data[:summary]
+        nights           = (Date.parse(end_date) - Date.parse(start_date)).to_i
+      else
+        forecasts = service.fetch
+      end
 
       travel = Travel.create!(
         destination: weather_today[:city_name],
@@ -27,15 +39,16 @@ module Api
         nights:      nights,
         laundry:     laundry,
         travel_type: travel_type,
-        start_date:  params[:start_date],
-        end_date:    params[:end_date]
+        start_date:  start_date,
+        end_date:    end_date
       )
 
       PackingCalculator.new(
         nights:            nights,
         laundry:           laundry,
         weather_forecasts: forecasts,
-        travel_type:       travel_type
+        travel_type:       travel_type,
+        forecast_summary:  forecast_summary
       ).calculate.each do |category, items|
         items.each do |item|
           travel.packing_items.create!(

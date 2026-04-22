@@ -1,4 +1,4 @@
-import type { WeatherToday, PackingListResult } from "@/types/packing";
+import type { WeatherToday, PackingListResult, PeriodForecast } from "@/types/packing";
 import type { Travel, TravelDetail, PackingItemRecord } from "@/types/travel";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -22,6 +22,17 @@ export async function fetchHealth(): Promise<{ status: string; message: string; 
 
 export async function fetchWeather(cityCode: string): Promise<WeatherToday> {
   const res = await fetch(`${API_URL}/api/weather?city_code=${cityCode}`);
+  return handleResponse(res);
+}
+
+export async function fetchWeatherPeriod(
+  cityCode:  string,
+  startDate: string,
+  endDate:   string
+): Promise<PeriodForecast> {
+  const res = await fetch(
+    `${API_URL}/api/weather?city_code=${cityCode}&start_date=${startDate}&end_date=${endDate}`
+  );
   return handleResponse(res);
 }
 

@@ -37,12 +37,13 @@ export const TRAVEL_TYPE_META: Record<TravelType, { label: string; emoji: string
 };
 
 export const CATEGORY_META: Record<string, { label: string; emoji: string; border: string; bg: string; badge: string }> = {
-  clothing:    { label: "着替え",      emoji: "👕", border: "border-blue-200",   bg: "bg-blue-50",   badge: "bg-blue-100 text-blue-700" },
-  outerwear:   { label: "服装",        emoji: "🧥", border: "border-indigo-200", bg: "bg-indigo-50", badge: "bg-indigo-100 text-indigo-700" },
-  rain_gear:   { label: "雨具",        emoji: "☔", border: "border-sky-200",    bg: "bg-sky-50",    badge: "bg-sky-100 text-sky-700" },
-  medicine:    { label: "常備薬",      emoji: "💊", border: "border-green-200",  bg: "bg-green-50",  badge: "bg-green-100 text-green-700" },
-  gadgets:     { label: "ガジェット",  emoji: "🔌", border: "border-purple-200", bg: "bg-purple-50", badge: "bg-purple-100 text-purple-700" },
-  travel_type: { label: "旅行タイプ別", emoji: "✈️", border: "border-orange-200", bg: "bg-orange-50", badge: "bg-orange-100 text-orange-700" },
+  clothing:          { label: "着替え",        emoji: "👕", border: "border-blue-200",   bg: "bg-blue-50",   badge: "bg-blue-100 text-blue-700" },
+  outerwear:         { label: "服装",          emoji: "🧥", border: "border-indigo-200", bg: "bg-indigo-50", badge: "bg-indigo-100 text-indigo-700" },
+  rain_gear:         { label: "雨具",          emoji: "☔", border: "border-sky-200",    bg: "bg-sky-50",    badge: "bg-sky-100 text-sky-700" },
+  medicine:          { label: "常備薬",        emoji: "💊", border: "border-green-200",  bg: "bg-green-50",  badge: "bg-green-100 text-green-700" },
+  gadgets:           { label: "ガジェット",    emoji: "🔌", border: "border-purple-200", bg: "bg-purple-50", badge: "bg-purple-100 text-purple-700" },
+  travel_type:       { label: "旅行タイプ別",  emoji: "✈️", border: "border-orange-200", bg: "bg-orange-50", badge: "bg-orange-100 text-orange-700" },
+  temperature_range: { label: "寒暖差対策",    emoji: "🌡️", border: "border-amber-200",  bg: "bg-amber-50",  badge: "bg-amber-100 text-amber-700" },
 };
 
-export const CATEGORY_ORDER = ["clothing", "outerwear", "rain_gear", "medicine", "gadgets", "travel_type"] as const;
+export const CATEGORY_ORDER = ["clothing", "outerwear", "temperature_range", "rain_gear", "medicine", "gadgets", "travel_type"] as const;

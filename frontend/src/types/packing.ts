@@ -31,6 +31,37 @@ export type WeatherToday = {
   rain_probability: number | null;
 };
 
+export type DailyForecast = {
+  date:             string;
+  weather:          string | null;
+  temp_max:         number | null;
+  temp_min:         number | null;
+  rain_probability: number | null;
+  status:           "available" | "out_of_range" | "past";
+};
+
+export type ForecastSummary = {
+  temp_max:             number | null;
+  temp_min:             number | null;
+  max_rain_probability: number | null;
+  avg_rain_probability: number | null;
+  has_rain:             boolean;
+  has_cold_day:         boolean;
+  has_hot_day:          boolean;
+};
+
+export type PeriodForecast = {
+  city_name:        string;
+  forecast_limited: boolean;
+  period: {
+    start_date: string;
+    end_date:   string;
+    days:       number;
+  };
+  daily_forecasts: DailyForecast[];
+  summary:         ForecastSummary;
+};
+
 // --- Packing list (new structured format) ---
 
 export type PackingEntry = {

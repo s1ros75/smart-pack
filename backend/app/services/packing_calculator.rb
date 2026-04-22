@@ -21,22 +21,25 @@ class PackingCalculator
     ]
   }.freeze
 
-  def initialize(nights:, laundry:, weather_forecasts:, travel_type: nil)
-    @nights       = nights
-    @laundry      = laundry
-    @forecasts    = weather_forecasts
-    @travel_type  = travel_type
+  def initialize(nights:, laundry:, weather_forecasts: [], travel_type: nil, forecast_summary: nil)
+    @nights          = nights
+    @laundry         = laundry
+    @forecasts       = weather_forecasts
+    @travel_type     = travel_type
+    @summary         = forecast_summary
   end
 
   def calculate
-    {
-      clothing:    clothing_items,
-      outerwear:   outerwear_items,
-      rain_gear:   rain_gear_items,
-      medicine:    medicine_items,
-      gadgets:     gadget_items,
-      travel_type: travel_type_items
+    result = {
+      clothing:          clothing_items,
+      outerwear:         outerwear_items,
+      rain_gear:         rain_gear_items,
+      medicine:          medicine_items,
+      gadgets:           gadget_items,
+      travel_type:       travel_type_items,
+      temperature_range: temperature_range_items
     }
+    result.reject { |_, v| v.empty? }
   end
 
   private
@@ -59,6 +62,43 @@ class PackingCalculator
   end
 
   def outerwear_items
+    @summary ? outerwear_from_summary : outerwear_from_forecasts
+  end
+
+  def outerwear_from_summary
+    max_t = @summary[:temp_max]
+    min_t = @summary[:temp_min]
+    return [] if max_t.nil? && min_t.nil?
+
+    items = []
+
+    # 日中の気温（最高気温）でベースの服装を決定
+    if max_t
+      if max_t >= 25
+        items << { name: "半袖シャツ", note: "最高気温#{max_t.to_i}℃向け" }
+      elsif max_t >= 15
+        items << { name: "長袖シャツ",    note: "最高気温#{max_t.to_i}℃向け" }
+        items << { name: "薄手ジャケット", note: "羽織り用" }
+      elsif max_t >= 5
+        items << { name: "厚手のセーター", note: "最高気温#{max_t.to_i}℃向け" }
+        items << { name: "コート",        note: "防寒用" }
+      else
+        items << { name: "ダウンジャケット", note: "最高気温#{max_t.to_i}℃向け" }
+        items << { name: "マフラー",        note: "防寒用" }
+        items << { name: "手袋",            note: "防寒用" }
+      end
+    end
+
+    # 朝晩が冷える場合（最低気温 5℃以下）で、日中は温かい場合は防寒具を追加
+    if @summary[:has_cold_day] && max_t && max_t >= 15
+      items << { name: "ダウンジャケット", note: "朝晩の防寒用（最低気温#{min_t.to_i}℃）" }
+      items << { name: "マフラー",        note: "防寒用" }
+    end
+
+    items
+  end
+
+  def outerwear_from_forecasts
     max_temp = @forecasts.map { |f| f[:temp_max] }.compact.max
     return [] if max_temp.nil?
 
@@ -84,6 +124,22 @@ class PackingCalculator
   end
 
   def rain_gear_items
+    @summary ? rain_gear_from_summary : rain_gear_from_forecasts
+  end
+
+  def rain_gear_from_summary
+    max_rain = @summary[:max_rain_probability]
+    return [] if max_rain.nil? || !@summary[:has_rain]
+
+    items = [{ name: "折りたたみ傘", note: "最大降水確率#{max_rain}%" }]
+    if max_rain >= 50
+      items << { name: "レインコート", note: "降水確率50%以上" }
+      items << { name: "防水シューズ", note: "降水確率50%以上" }
+    end
+    items
+  end
+
+  def rain_gear_from_forecasts
     max_rain = @forecasts
       .flat_map { |f| f[:chance_of_rain]&.values || [] }
       .compact
@@ -96,6 +152,21 @@ class PackingCalculator
       items << { name: "レインコート", note: "降水確率50%以上" }
       items << { name: "防水シューズ", note: "降水確率50%以上" }
     end
+    items
+  end
+
+  def temperature_range_items
+    return [] unless @summary
+
+    max_t = @summary[:temp_max]
+    min_t = @summary[:temp_min]
+    return [] if max_t.nil? || min_t.nil?
+
+    range = max_t - min_t
+    return [] if range < 10
+
+    items = [{ name: "薄手の羽織もの", note: "朝晩の冷え込み対策（気温差#{range.to_i}℃）" }]
+    items << { name: "重ね着できる服", note: "気温差#{range.to_i}℃向けのレイヤリング推奨" } if range >= 15
     items
   end
 
