@@ -54,9 +54,15 @@ export default function TravelDetailPage() {
     );
   }
 
-  const meta      = TRAVEL_TYPE_META[travel.travel_type];
+  const meta = TRAVEL_TYPE_META[travel.travel_type];
+
+  const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+  function fmtDate(s: string) {
+    const d = new Date(s + "T00:00:00");
+    return `${d.getMonth() + 1}月${d.getDate()}日(${WEEKDAYS[d.getDay()]})`;
+  }
   const dateRange = travel.start_date && travel.end_date
-    ? `${travel.start_date} 〜 ${travel.end_date}`
+    ? `${fmtDate(travel.start_date)} 〜 ${fmtDate(travel.end_date)}（${travel.nights}泊${travel.nights + 1}日）`
     : `${travel.nights}泊`;
 
   return (

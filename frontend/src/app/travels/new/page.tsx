@@ -16,18 +16,26 @@ type WeatherState =
   | { status: "ok"; data: WeatherToday }
   | { status: "error"; message: string };
 
+const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+
+function formatDateLabel(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  return `${d.getMonth() + 1}月${d.getDate()}日(${WEEKDAYS[d.getDay()]})`;
+}
+
 export default function NewTravelPage() {
   const router = useRouter();
 
-  const [cityCode,    setCityCode]    = useState(CITIES[2].code);
-  const [startDate,   setStartDate]   = useState("");
-  const [endDate,     setEndDate]     = useState("");
-  const [nights,      setNights]      = useState(2);
-  const [laundry,     setLaundry]     = useState(false);
-  const [travelType,  setTravelType]  = useState<TravelType>("leisure");
-  const [weather,     setWeather]     = useState<WeatherState>({ status: "idle" });
-  const [submitting,  setSubmitting]  = useState(false);
-  const [error,       setError]       = useState<string | null>(null);
+  const [cityCode,   setCityCode]   = useState(CITIES[2].code);
+  const [startDate,  setStartDate]  = useState("");
+  const [endDate,    setEndDate]    = useState("");
+  const [nights,     setNights]     = useState(2);
+  const [laundry,    setLaundry]    = useState(false);
+  const [travelType, setTravelType] = useState<TravelType>("leisure");
+  const [weather,    setWeather]    = useState<WeatherState>({ status: "idle" });
+  const [submitting, setSubmitting] = useState(false);
+  const [error,      setError]      = useState<string | null>(null);
+  const [dateError,  setDateError]  = useState<string | null>(null);
 
   useEffect(() => {
     setWeather({ status: "loading" });
@@ -36,27 +44,40 @@ export default function NewTravelPage() {
       .catch(err  => setWeather({ status: "error", message: err instanceof Error ? err.message : "エラー" }));
   }, [cityCode]);
 
-  // 日付から宿泊数を自動計算
   useEffect(() => {
-    if (!startDate || !endDate) return;
+    if (!startDate || !endDate) {
+      setDateError(null);
+      return;
+    }
     const diff = Math.round(
       (new Date(endDate).getTime() - new Date(startDate).getTime()) / 86400000
     );
-    if (diff > 0) setNights(diff);
+    if (diff <= 0) {
+      setDateError("帰宅日は出発日より後の日付を選択してください");
+    } else {
+      setDateError(null);
+      setNights(diff);
+    }
   }, [startDate, endDate]);
+
+  const hasDates   = startDate !== "" && endDate !== "" && !dateError;
+  const nightsCalc = hasDates
+    ? Math.round((new Date(endDate).getTime() - new Date(startDate).getTime()) / 86400000)
+    : nights;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (dateError) return;
     setSubmitting(true);
     setError(null);
     try {
       const travel = await createTravel({
-        cityCode:   cityCode,
-        nights:     nights,
-        laundry:    laundry,
-        travelType: travelType,
-        startDate:  startDate || undefined,
-        endDate:    endDate   || undefined,
+        cityCode,
+        nights:    nightsCalc,
+        laundry,
+        travelType,
+        startDate: startDate || undefined,
+        endDate:   endDate   || undefined,
       });
       router.push(`/travels/${travel.id}`);
     } catch (err) {
@@ -96,8 +117,11 @@ export default function NewTravelPage() {
 
         {/* 日程 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">日程（任意）</label>
-          <div className="grid grid-cols-2 gap-3">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            日程
+            <span className="text-xs font-normal text-gray-400 ml-1">（任意）</span>
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-gray-400 mb-1 block">出発日</label>
               <input
@@ -114,31 +138,49 @@ export default function NewTravelPage() {
                 value={endDate}
                 min={startDate}
                 onChange={e => setEndDate(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                  dateError ? "border-red-400 focus:ring-red-400" : "focus:ring-blue-400"
+                }`}
               />
             </div>
           </div>
+
+          {dateError && (
+            <p className="mt-2 text-xs text-red-500">{dateError}</p>
+          )}
+
+          {hasDates && (
+            <div className="mt-3 flex items-center gap-2 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2">
+              <span className="font-medium">
+                {formatDateLabel(startDate)}
+                <span className="text-gray-400 mx-1.5">→</span>
+                {formatDateLabel(endDate)}
+              </span>
+              <span className="ml-auto font-bold text-blue-600 whitespace-nowrap">
+                {nightsCalc}泊{nightsCalc + 1}日
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* 宿泊数 */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            宿泊数
-            {startDate && endDate && <span className="text-xs text-blue-500 ml-2">日程から自動計算</span>}
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min={1}
-              max={30}
-              value={nights}
-              onChange={e => setNights(Number(e.target.value))}
-              required
-              className="w-24 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <span className="text-sm text-gray-500">泊</span>
+        {/* 宿泊数（日程未入力時のみ表示） */}
+        {!hasDates && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">宿泊数</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={30}
+                value={nights}
+                onChange={e => setNights(Number(e.target.value))}
+                required
+                className="w-24 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+              <span className="text-sm text-gray-500">泊</span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 旅行タイプ */}
         <div>
@@ -184,7 +226,7 @@ export default function NewTravelPage() {
 
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || !!dateError}
           className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition"
         >
           {submitting ? "生成中..." : "保存してパッキングリストを生成"}

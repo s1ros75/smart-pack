@@ -102,8 +102,10 @@ module Api
     end
 
     def travel_json(travel)
+      days_until_trip = travel.start_date ? (travel.start_date - Date.today).to_i : nil
       travel.as_json.merge(
-        packing_items: travel.packing_items.order(:category, :id)
+        packing_items:   travel.packing_items.order(:category, :id),
+        days_until_trip: days_until_trip
       )
     end
   end

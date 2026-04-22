@@ -43,12 +43,20 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-blue-700">Smart Pack</h1>
           <p className="text-sm text-gray-500 mt-1">旅行の持ち物を賢く管理</p>
         </div>
-        <Link
-          href="/travels/new"
-          className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition"
-        >
-          ＋ 新しい旅行プラン
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            disabled
+            className="text-sm font-medium text-gray-600 hover:text-blue-600 px-3 py-2 rounded-lg hover:bg-gray-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            ログイン
+          </button>
+          <button
+            disabled
+            className="text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            会員登録
+          </button>
+        </div>
       </div>
 
       {loading && (

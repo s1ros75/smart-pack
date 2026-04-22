@@ -1,16 +1,17 @@
 export type TravelType = "business" | "leisure" | "outdoor";
 
 export type Travel = {
-  id:          number;
-  destination: string;
-  city_code:   string;
-  nights:      number;
-  laundry:     boolean;
-  travel_type: TravelType;
-  start_date:  string | null;
-  end_date:    string | null;
-  created_at:  string;
-  updated_at:  string;
+  id:              number;
+  destination:     string;
+  city_code:       string;
+  nights:          number;
+  laundry:         boolean;
+  travel_type:     TravelType;
+  start_date:      string | null;
+  end_date:        string | null;
+  days_until_trip: number | null;
+  created_at:      string;
+  updated_at:      string;
 };
 
 export type PackingItemRecord = {
